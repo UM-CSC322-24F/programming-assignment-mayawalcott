@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     if (argc != 2) {
         perror("File name not given!\n");
         return(EXIT_FAILURE);
-    }
+    } //end of if statement
 
     Boat *boats[MAX_BOATS] = {NULL};
 
@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
                 saveBoatData(argv[1], boats, counter);
                 break;
             default:
+		//if it doesnt match any of the cases
 		printf("Invalid option %c \n", choice);
                 break;
         }
@@ -102,7 +103,7 @@ int main(int argc, char *argv[]) {
 }
 
 ///*the purpose of this it to load the data from the file once the program starts
-//whose name is provided as the command line argument, and when the program exits it must store the data back to that file*/
+//whose name is provided as the command line argument, and when the program exits it must store the data back to that file
 void boatDataLoader(const char* filename, Boat** boats, int* counter) {
     char line[MAX_LINE_LENGTH];
     FILE *file = fopen(filename, "r");
@@ -119,6 +120,8 @@ void boatDataLoader(const char* filename, Boat** boats, int* counter) {
             fclose(file);
             exit(EXIT_FAILURE);
         }
+
+	//holding enough room for buffers
 
         char type[15];
 	
@@ -212,7 +215,7 @@ void addBoat(int* counter, Boat **boats) {
         printf("Error. Boat has not been added\n");
         free(boat);
         return;
-    }
+    } //end of if -else
 
     boats[(*counter)++] = boat;
     printf("Boat has been added\n");
@@ -263,12 +266,13 @@ void acceptAPayment(int *counter, Boat **boats) {
             return;
         }
     }
+    //if there are no boats with that name ...
     printf("No boat with that name\n");
 }
 
 void updateOwedMonthly(int counter, Boat **boats) {
     for (int i = 0; i < counter; i++) {
-        boats[i]->moneyOwed += 10.0; // Increase by $10.00 monthly
+        boats[i]->moneyOwed += 10.0; // increase by $10.00 monthly?? by a certain amount
     }
     printf("Monthly fees updated.\n");
 }
@@ -277,6 +281,7 @@ void updateOwedMonthly(int counter, Boat **boats) {
 void saveBoatData(const char* filename, Boat** boats, int counter) {
     FILE *file = fopen(filename, "w");
 
+    //displaying error messages
     if (!file) {
         printf("Error opening file for writing!\n");
         exit(EXIT_FAILURE);
@@ -301,7 +306,7 @@ void saveBoatData(const char* filename, Boat** boats, int counter) {
         }
     }
 
-    fclose(file);
+    fclose(file); //close after we are done with the file 
     printf("Data saved successfully.\n");
 }
 
