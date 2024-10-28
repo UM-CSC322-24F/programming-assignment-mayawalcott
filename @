@@ -1,0 +1,411 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_BOATS 120
+#define MAX_BOAT_NAME_LEN 127
+#define MAX_LINE_LENGTH 512
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+//which type of place (slip/land/trailor/storage)
+typedef enum {
+	slip,
+	land,
+	trailor,
+	storage,
+} PlaceType;
+
+//union to hold extra relavent information
+typedef union {
+
+		int slipNumber;
+		char bayLetter;
+		//the +1 accounts for the '\0' for the end of the string
+		char trailorTag[MAX_BOAT_NAME_LEN + 1];
+		int storageNumber;
+
+} BoatData;
+
+//contains boat information
+typedef struct {
+
+	char boatName[MAX_BOAT_NAME_LEN + 1];
+	int lengthInFeet;
+	PlaceType type;
+	BoatData extraData;
+	float moneyOwed;
+
+} Boat;
+
+//these are the prototypes of the functions
+void boatDataLoader(const char* filename, Boat** boats, int* counter);
+int compareBoats(const void *pointer1, const void *pointer2);
+void printInventory(Boat **boats, int counter);
+void addBoat(int* counter, Boat **boats);
+void removeBoat(int *counter, Boat **boats);
+void acceptAPayment(int *counter, Boat **boats);
+void updateOwedMonthly(int counter, Boat **boats);
+void saveBoatData(const char* filename, Boat** boats, int counter);
+
+
+//parameters allow for us to account for some command line arguments
+int main(int argc, char *argv[]){
+
+	int counter = 0;
+
+	//checking if the underlying argument count != 2 ...
+	if (argc != 2){
+		perror("File names not given!\n");
+		return(EXIT_FAILURE);
+	} 
+
+
+	Boat *boats[MAX_BOATS] = {NULL};
+
+	//loads boat data from CSV [2.0]
+	boatDataLoader(argv[1], boats, &counter);
+	
+	char choice;
+
+	//prints the welcome message [0.5]
+	printf("Welcome to the Boat Management System\n");
+	printf("-------------------------------------\n");
+
+	do {
+		printf("(I)nventory, (A)dd, (R)emove, (P)ayment, (M)onth, e(X)it : ");
+
+        	scanf(" %c", &choice);
+
+		//so that the menu is case insensitive [1.0]
+        	choice = toupper(choice);
+
+        	switch(choice){
+
+                	case 'I':
+                        	printInventory(boats,counter);
+				break;
+
+                	case 'A':
+                        	addBoat(&counter,boats);
+				break;
+
+                	case 'R':
+                        	removeBoat(&counter,boats);
+				break;
+
+			case 'P':
+                        	acceptAPayment(&counter,boats);
+				break;
+
+			case 'M':
+                        	updateOwedMonthly(counter,boats);
+				break;
+
+			case 'X':
+				saveBoatData(argv[1], boats, counter);
+                        	break;
+
+                default:
+                        printf("Invalid option %c\n", choice);
+
+        	} //end of switch case
+
+
+	} while (choice != 'X'); //end of do while
+
+	
+	//print exit message [0.5]
+	printf("Exiting the Boat Management System\n");
+
+	exit(EXIT_SUCCESS);
+
+} //end of the main method
+
+/*the purpose of this function is to load the data from the file once the program starts
+whose name is provided as the command line argument, and when the program exits it must store the data back to that file*/
+
+void boatDataLoader(const char* filename, Boat** boats, int* counter){
+
+	//using this as my line buffer
+        char line[MAX_LINE_LENGTH];
+
+	//opening the file in read mode
+	FILE *file = fopen(filename, "r");
+
+	if (!file){
+		printf("Trying to opent the file resulted in failure!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	while (fgets(line, sizeof(line), file) && *counter < MAX_BOATS){
+
+		Boat *boat = malloc(sizeof(Boat));
+
+		if(!boat){
+			//display malloc error(s)
+			perror("Memory allocation failed");
+			fclose(file);
+			exit(EXIT_FAILURE);
+		}
+
+		//use of the sscanf() in order to convert a string to a series of values
+		
+		//provide large enough buffer for different strings
+		char stringType[15];
+
+		//i used https://stackoverflow.com/questions/9537072/properly-using-sscanf to help me understand sscanf better!
+		//--------------------------
+		//string up until 127 chars, %[^,] for type of place, %d for length of boat, %f moneyOwed
+		if (sscanf(line, "%127[^,],%d,%[^,],%[^,],%f",
+					boat->boatName,
+					&boat->lengthInFeet,
+					stringType,
+					(boat->type == slip ? (char*)&boat->extraData.slipNumber :
+					 boat->type == land ? (char*)&boat->extraData.bayLetter : 
+					 boat->type == trailor ? (char*)boat->extraData.trailorTag : 
+					 (char*)&boat->extraData.storageNumber),
+					&boat->moneyOwed == 5 && boat->moneyOwed < 5)){
+
+			printf("Error found on line %s", line);
+			free(boat);
+
+			} 
+		
+		if (strcmp(stringType, "slip") == 0){
+			boat->type = slip;
+
+		} else if (strcmp(stringType, "land") == 0){
+			boat->type = land;
+
+		} else if (strcmp(stringType, "trailor") == 0){
+			boat->type = trailor;
+
+		} else if (strcmp(stringType, "storage") == 0){
+			boat->type = storage;
+
+		}  //end of if-else statements
+		
+		boats[(*counter)++] = boat;
+
+	}
+	
+	fclose(file);
+
+} //end of boatDataLoader function
+
+//defining the compare function so we can use it in qsort
+int compareBoats(const void *pointer1, const void *pointer2){
+
+	return strcmp((*(Boat **)pointer1)->boatName, (*(Boat **)pointer2)->boatName);
+
+} // end of function
+
+void saveBoatData(const char* filename, Boat** boats, int counter){
+
+	FILE *file = fopen(filename, "w");
+
+	if (!file){
+		printf("Failed to Open File\n");
+		exit(EXIT_FAILURE);
+
+	} //end of if statement
+
+
+} //end of function
+
+//the purpose of this function is to print the boat inventory, sorted alphabetically by boat name
+void printInventory(Boat **boats, int counter){
+	
+	qsort(boats, counter, sizeof(Boat *), compareBoats);
+
+	for (int i = 0; i < counter; i++){
+
+		Boat *boat = boats[i];
+
+		printf("%-15s %3d' %10s ", boat->boatName, boat->lengthInFeet,
+			
+				boat->type == slip ? "slip" :
+				boat->type == land ? "land" : 
+				boat->type == trailor ? "trailor" : "storage");
+
+		switch (boat->type){
+
+			case slip: printf("# %d", boat->extraData.slipNumber);
+				   break;
+
+			case land: printf("%c", boat->extraData.bayLetter);
+				   break;
+
+			case trailor: printf("%s", boat->extraData.trailorTag);
+				   break;
+				      
+			case storage: printf("# %d", boat->extraData.storageNumber);
+				   break;
+
+		} //end of switch case
+		
+		printf(" Owes $%.2f\n", boat->moneyOwed);
+
+	} //end for loop
+
+} // end of function
+ 
+//the purpose of this function is to add a boat by providing as a string that looks like one line of the .csv file
+void addBoat(int* counter, Boat **boats){
+
+	if (counter >= MAX_BOATS){
+		perror("Cannot add any more boats. Program only allows for up to 120 boats.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	Boat *boat = malloc(sizeof(Boat));	
+
+	if (!boat){
+		perror("Sorry, Memory Allocation has failed\n");
+		exit(EXIT_FAILURE);
+	}
+
+
+	char stringType[15];
+
+		printf("Please enter the boat data in CSV format                 : ");
+                //string up until 127 chars, %[^,] for type of place, %d for length of boat, %f moneyOwed
+                scanf(line, "%127[^,],%d,%[^,],%[^,],%f",
+                                        boat->boatName,
+                                        &boat->lengthInFeet,
+                                        stringType,
+                                        (boat->type == slip ? &boat->extraData.slipNumber :
+                                         boat->type == land ? &boat->extraData.bayLetter :
+                                         boat->type == trailer ? boat->extraData.trailorTag :
+                                         &boat->extraData.storageNumber)
+                                        &boat->moneyOwed !=5){
+
+                        printf("Error found on line %s", line);
+                        free(boat);
+
+                        return;
+
+                } //end of if statement
+
+                if (strcmp(stringType, "slip") == 0){
+                        boat->type = slip;
+
+                } else if (strcmp(stringType, "land") == 0){
+                        boat->type = land;
+
+                } else if (strcmp(stringType, "trailor") == 0){
+                        boat->type = trailor;
+
+                } else if (strcmp(stringType, "storage") == 0){
+                        boat->type = storage;
+
+                } else {
+			
+			printf("Error. Boat has not been added\n");
+			free(boat);
+			exit(EXIT_FAILURE);
+
+		} //end of if-else statements
+		
+		boats[(*counter)++] = boat;
+		print("Boat has been added\n");
+
+} //end of function
+
+//the purpose of this function is to be able to remove a boat by name
+void removeBoat(int *counter, Boat **boats){
+
+	char boatName[MAX_BOAT_NAME_LEN + 1];
+
+	printf("Please enter the boat name: " );
+	scanf(" %127s", boatName);
+
+	for (int i = 0; i < *counter; i++){
+
+		if (strcmp(boats[i]->boatName, boatName) == 0){
+
+			free(boats[i]);
+
+			boats[i] = boats[--(*counter)];
+
+			printf("Success! Boat has been removed.\n");
+
+		} 
+
+	} //end of for loop
+	
+	printf("No boat with that name\n");
+
+} //end of function
+
+//the purpose of this program is to accept a payment for the boat, up to the amount owed
+void acceptAPayment(int *counter, Boat **boats){
+
+	char boatName[MAX_BOAT_NAME_LEN + 1];
+
+	float payment;
+
+	printf("Please enter the boat name: ");
+	scanf("%127s", boatName);
+
+	printf("Please enter the amount to be paid: ");
+	scanf("%f", &payment);
+
+	for (int i = 0; i < *counter; i++){
+
+		if (strcmp(boats[i]->boatName, boatName) == 0){
+
+			if (payment > boats[i]->moneyOwed){
+				printf("That is more than the amount owed, $%.2f\n", boats[i]->moneyOwed);
+			}
+
+			boats[i]->moneyOwed -= payment;
+			printf("\n");
+
+		} //end of if
+
+
+	} //end of for loop
+
+
+	printf("No boat with that name\n");
+
+
+} //end of function
+
+//the purpose of this function is to update the amount owed because a new month has started
+void updateOwedMonthly(int counter, Boat **boats){
+
+	float charges = 0;
+
+	for (int i = 0; i < counter; i++){
+
+		switch(boat[i]->type){
+
+			//Boats in slips - $12.50/foot/month
+			case slip: charges = 12.50; 
+				break;
+
+			//Boats on land for work - $14.00/foot/month
+			case land: charges = 14.00;
+				break;
+
+			//Boats on trailors - $25.00/foot/month
+			case trailor: charges = 25.00;
+				break;
+
+			//Boats in storage - $11.20/foot/month
+			case storage: charges = 11.20;
+				break;
+
+		} 
+
+		boats[i]->moneyOwed += boats[i]->lengthInFeet * charges;
+
+	} //end of for loop
+	
+	printf("The amount owed has been updated since a new month started\n");
+
+} //end of function

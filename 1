@@ -1,0 +1,218 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_BOATS 120
+#define MAX_BOAT_NAME_LEN 127
+#define MAX_LINE_LENGTH 512
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+//which type of place (slip/land/trailor/storage)
+typedef enum {
+	slip,
+	land,
+	trailor,
+	storage,
+} PlaceType;
+
+//union to hold extra relavent information
+typedef union {
+
+		int slipNumber,
+		char bayLetter,
+		char trailorTag[],
+		int storageNumber,
+
+} BoatData;
+
+//contains boat information
+typdef struct {
+
+	char boatName[MAX_BOAT_NAME_LEN + 1];
+	int lengthInFeet;
+	PlaceType type;
+	BoatData extraData;
+	float moneyOwed;
+
+} Boat;
+
+//these are the prototypes of the functions
+void boatDataLoader(const char* filename, Boat** boats, int* counter);
+void compareBoats(const void *pointer1, const void *pointer2);
+
+
+
+//parameters allow for us to account for some command line arguments
+int main(int argc, char *argv[]){
+
+	//checking if the underlying argument count != 2 ...
+	if (argc != 2){
+		perror("File names not given!\n");
+		return(EXIT_FAILURE);
+
+	} //check over this !!!!!!!!!!
+	
+       		
+
+
+
+
+	int *array[120];
+
+	/*data for each boat must be held in a malloced struct that is pointed to from an element of
+	an array of 120 pointers some which might not be used because the marina is not always full*/
+
+
+	if (array = malloc(sizeOf(MAX_BOATS)) == NULL) {
+        perror("Cannot malloc");
+        exit(EXIT_FAILURE);
+	
+	}
+	
+	char choice;
+
+	printf("Welcome to the Boat Management System\n");
+	printf("-------------------------------------\n");
+	printf("
+(I)nventory, (A)dd, (R)emove, (P)ayment, (M)onth, e(X)it : ");
+
+	scanf("%c", &choice);
+
+	choice = tolower(choice);
+
+	switch(choice){
+
+		case 'i':
+
+			printf();
+
+		case 'a':
+
+			printf();
+
+		case 'r': 
+			printf();
+
+		case 'p'
+			printf();
+
+		case 'm'
+			printf();
+
+		case 'x'
+			break;
+
+		default:
+			printf("Invalid option %c\n", choice);
+
+	} //end of switch case
+
+} //end of the main method
+
+/*the purpose of this function is to load the data from the file once the program starts
+whose name is provided as the command line argument, and when the program exits it must store the data back to that file*/
+
+void boatDataLoader(){
+
+	FILE *file = fopen(filename, "r");
+
+	if (!file){
+		perror("Trying to open the failure resulted in failure!");
+		return;
+	} 
+
+	//using this as my line buffer
+	char line[MAX_LINE_LENGTH];
+
+	while (fgets(line, sizeof(line), file) && *counter < MAX_BOATS){
+
+		Boat *boat = (Boat*)malloc(sizeof(Boat));
+
+		if(!boat){
+			perror("Memory allocation failed");
+			fclose(file);
+			return;
+		}
+
+		//use of the sscanf() in order to convert a string to a series of values
+		
+		char stringType[10];
+
+		//i used https://stackoverflow.com/questions/9537072/properly-using-sscanf to help me understand sscanf better!
+		//--------------------------
+		//string up until 127 chars, %[^,] for type of place, %d for length of boat, %f moneyOwed
+		if (sscanf(line, "%127[^,],%d,%[^,],%[^,],%f",
+					boat->boatName,
+					&boat->lengthInFeet,
+					stringType,
+					(boat->type == slip ? &boat->extraData.slipNumber :
+					 boat->type == land ? &boat->extraData.bayLetter : 
+					 boat->type == trailer ? boat->extraData.trailorTag : 
+					 &boat->extraData.storageNumber)
+					&boat->moneyOwed);
+
+			printf("Error found on line %s", line);
+			free(boat);
+
+			continue;
+
+		} //end of if statement
+		
+		if (strcmp(stringType, "slip") == 0){
+			boat->type = slip;
+
+		} else if (strcmp(stringType, "land") == 0){
+			boat->type = land;
+
+		} else if (strcmp(stringType, "trailor") == 0){
+			boat->type = trailor;
+
+		} else if (strcmp(stringType, "storage") == 0){
+			boat->type = storage;
+
+		}  //end of if-else statements
+		
+		boats[(*counter)++] = boat;
+
+	} //end of while loop
+	
+	fclose(file);
+
+} //end of boatDataLoader function
+
+//defining the compare function so we can use it in qsort
+int compareBoats(const void *pointer1, const void *pointer2){
+
+	return strcmp((*(Boat **)pointer1)->boatName, (*(Boat **)pointer2)->boatName);
+
+} // end of function
+
+//the purpose of this function is to print the boat inventory, sorted alphabetically by boat name
+void printInventory(Boat **boats, int counter){
+	
+	qsort(boats, counter, sizeof(Boat *), compareBoats);
+
+	for (int i = 0; i < counter; i++){
+
+		Boat *boat = boats[i];
+
+		printf("%-15s %3d' %10s ", boat->boatName, boat->lengthInFeet,
+			
+				boat->type == "slip" :r
+				boat->type == 
+
+
+	} //end for loop
+
+
+
+} // end of function
+
+
+
+
+
+
+}
