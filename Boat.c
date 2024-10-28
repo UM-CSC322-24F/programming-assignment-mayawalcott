@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
                 saveBoatData(argv[1], boats, counter);
                 break;
             default:
+		printf("Invalid option %c \n", choice);
                 break;
         }
 
@@ -215,7 +216,7 @@ void addBoat(int* counter, Boat **boats) {
 
     boats[(*counter)++] = boat;
     printf("Boat has been added\n");
-}
+} //end of a function
 
 //the purpose is to remove a boat by name
 void removeBoat(int *counter, Boat **boats) {
@@ -241,6 +242,7 @@ void removeBoat(int *counter, Boat **boats) {
     }
 }
 
+//the purpose of this program is to accept a payment for the boat up to the amount owed
 void acceptAPayment(int *counter, Boat **boats) {
     char boatName[MAX_BOAT_NAME_LEN + 1];
     float payment;
